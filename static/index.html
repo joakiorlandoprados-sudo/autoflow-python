@@ -168,10 +168,16 @@
 
     .dropzone {
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       border: 1.5px dashed rgba(0, 212, 170, 0.35);
       border-radius: 20px;
       background: linear-gradient(180deg, rgba(0, 212, 170, 0.06), rgba(255, 255, 255, 0.02));
+      min-height: 180px;
       padding: 34px 22px;
+      overflow: visible;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
