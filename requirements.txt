@@ -1,5 +1,4 @@
---only-binary=:all:
-pandas==2.2.2
+pandas==3.0.3
 openpyxl==3.1.2
 reportlab==4.1.0
 fastapi==0.111.0
