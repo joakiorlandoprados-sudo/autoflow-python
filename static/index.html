@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoFlow Python</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-strong: #11161d;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #00d4aa;
+      --accent-soft: rgba(0, 212, 170, 0.12);
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --danger: #ff7b72;
+      --success: #32d296;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+      --radius: 22px;
+      --radius-sm: 16px;
+      --font-body: "Inter", sans-serif;
+      --font-mono: "JetBrains Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(0, 212, 170, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(75, 105, 255, 0.12), transparent 24%),
+        linear-gradient(180deg, #0d1117 0%, #0a0f14 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.65), transparent 90%);
+      pointer-events: none;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 52px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero,
+    .panel,
+    .footer {
+      background: linear-gradient(180deg, rgba(22, 27, 34, 0.94), rgba(16, 21, 28, 0.92));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 32px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -120px auto;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(0, 212, 170, 0.24), transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .hero-copy h1 span:first-child {
+      color: var(--accent);
+    }
+
+    .hero-copy p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 580px;
+    }
+
+    .hero-meta {
+      display: grid;
+      gap: 10px;
+      min-width: 220px;
+    }
+
+    .meta-chip {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .panel {
+      padding: 28px;
+      max-height: 4000px;
+      overflow: hidden;
+      transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.45s ease, margin 0.35s ease, padding 0.35s ease;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .panel.hidden {
+      opacity: 0;
+      transform: translateY(18px);
+      max-height: 0;
+      overflow: hidden;
+      pointer-events: none;
+      margin-top: -8px;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+    }
+
+    .dropzone {
+      position: relative;
+      border: 1.5px dashed rgba(0, 212, 170, 0.35);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(0, 212, 170, 0.06), rgba(255, 255, 255, 0.02));
+      padding: 34px 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+    }
+
+    .dropzone:hover,
+    .dropzone.active {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      background: linear-gradient(180deg, rgba(0, 212, 170, 0.11), rgba(255, 255, 255, 0.03));
+    }
+
+    .dropzone input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dropzone-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 68px;
+      height: 68px;
+      border-radius: 22px;
+      background: rgba(0, 212, 170, 0.12);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      margin-bottom: 18px;
+    }
+
+    .dropzone h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+    }
+
+    .dropzone p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .filename {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      font-family: var(--font-body);
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease, opacity 0.2s ease;
+    }
+
+    .button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(0, 212, 170, 0.18);
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      box-shadow: none;
+    }
+
+    .button-primary {
+      width: 100%;
+      margin-top: 18px;
+      background: linear-gradient(135deg, var(--accent), #1ce8be);
+      color: #06261f;
+    }
+
+    .button-secondary {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .button-inner {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(6, 38, 31, 0.28);
+      border-top-color: rgba(6, 38, 31, 0.95);
+      animation: spin 0.9s linear infinite;
+      display: none;
+    }
+
+    .spinner.light {
+      border-color: rgba(255,255,255,0.16);
+      border-top-color: rgba(255,255,255,0.92);
+    }
+
+    .is-loading .spinner {
+      display: inline-block;
+    }
+
+    .is-loading .label-text::after {
+      content: "…";
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      display: none;
+      border: 1px solid transparent;
+    }
+
+    .message.visible {
+      display: block;
+    }
+
+    .message.error {
+      color: #ffd8d5;
+      background: rgba(255, 123, 114, 0.12);
+      border-color: rgba(255, 123, 114, 0.28);
+    }
+
+    .message.success {
+      color: #d7fff0;
+      background: rgba(0, 212, 170, 0.1);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .summary-card .eyebrow {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 14px;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .table-shell {
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(8, 12, 17, 0.45);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.92rem;
+    }
+
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+    }
+
+    td.mono,
+    th.mono {
+      font-family: var(--font-mono);
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .subpanel {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .subpanel h3 {
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+
+    .category-block + .category-block {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .category-label {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #d7e0e8;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(0, 212, 170, 0.08);
+      border: 1px solid rgba(0, 212, 170, 0.18);
+      color: #d8fff3;
+      font-size: 0.86rem;
+    }
+
+    .chip span {
+      font-family: var(--font-mono);
+      color: rgba(216, 255, 243, 0.72);
+      font-size: 0.78rem;
+    }
+
+    .trend {
+      display: grid;
+      gap: 12px;
+    }
+
+    .trend-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+
+    .trend-row {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .trend-label,
+    .trend-value {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #d0d7de;
+    }
+
+    .trend-track {
+      position: relative;
+      height: 12px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .trend-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00d4aa, #16f0c1);
+      box-shadow: 0 0 24px rgba(0, 212, 170, 0.24);
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 8px 0 4px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding: 18px 22px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    .footer code {
+      font-family: var(--font-mono);
+      color: #d0d7de;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        flex-direction: column;
+      }
+
+      .summary-grid,
+      .button-grid,
+      .grid-two {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100% - 20px, 100%);
+        padding-top: 20px;
+        padding-bottom: 24px;
+      }
+
+      .hero,
+      .panel,
+      .footer {
+        border-radius: 20px;
+      }
+
+      .hero,
+      .panel {
+        padding: 22px;
+      }
+
+      .trend-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1><span>AutoFlow</span> <span>Python</span></h1>
+        <p>Intelligent Report Automator</p>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-chip">fastapi://upload</div>
+        <div class="meta-chip">render-ready · /tmp runtime</div>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="panel" id="uploadPanel">
+        <h2>Upload and Analyze</h2>
+        <p class="panel-subtitle">Drop a business dataset here or browse for a file. AutoFlow will clean it, profile it, and prepare export-ready reports.</p>
+
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".csv,.xlsx">
+          <div class="dropzone-badge">{ }</div>
+          <h3>Drag and drop your CSV or XLSX file</h3>
+          <p>Click anywhere in this panel to browse your device. Accepted formats: <code>.csv</code> and <code>.xlsx</code>.</p>
+        </label>
+
+        <div class="filename" id="fileName">No file selected yet.</div>
+
+        <button class="button button-primary" id="analyzeButton" type="button">
+          <span class="button-inner">
+            <span class="spinner" id="analyzeSpinner"></span>
+            <span class="label-text">Analyze File</span>
+          </span>
+        </button>
+
+        <div class="message" id="statusMessage"></div>
+      </section>
+
+      <section class="panel hidden" id="statsPanel">
+        <h2>Analysis Overview</h2>
+        <p class="panel-subtitle">These results come directly from the AutoFlow data pipeline after cleaning and normalization.</p>
+
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th class="mono">Column</th>
+                <th class="mono">Min</th>
+                <th class="mono">Max</th>
+                <th class="mono">Mean</th>
+                <th class="mono">Median</th>
+                <th class="mono">Total</th>
+              </tr>
+            </thead>
+            <tbody id="numericTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="grid-two">
+          <div class="subpanel">
+            <h3>Categorical Highlights</h3>
+            <div id="categoricalStats"></div>
+          </div>
+          <div class="subpanel" id="trendPanel">
+            <h3>Time Trend</h3>
+            <div id="trendContent"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="exportPanel">
+        <h2>Export Reports</h2>
+        <p class="panel-subtitle">Generate polished output files from the same analyzed session without re-uploading your dataset.</p>
+
+        <div class="button-grid">
+          <button class="button button-secondary export-button" type="button" data-format="excel">Download Excel</button>
+          <button class="button button-secondary export-button" type="button" data-format="pdf">Download PDF</button>
+          <button class="button button-secondary export-button" type="button" data-format="both">Download Both</button>
+        </div>
+
+        <div class="message" id="exportMessage"></div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      Built with <code>Python</code> · <code>FastAPI</code> · <code>Pandas</code> · <code>OpenPyXL</code> · <code>ReportLab</code>
+    </footer>
+  </main>
+
+  <script>
+    const state = {
+      selectedFile: null,
+      sessionId: null,
+      latestResult: null,
+    };
+
+    const elements = {
+      dropzone: document.getElementById("dropzone"),
+      fileInput: document.getElementById("fileInput"),
+      fileName: document.getElementById("fileName"),
+      analyzeButton: document.getElementById("analyzeButton"),
+      analyzeSpinner: document.getElementById("analyzeSpinner"),
+      statusMessage: document.getElementById("statusMessage"),
+      exportMessage: document.getElementById("exportMessage"),
+      statsPanel: document.getElementById("statsPanel"),
+      exportPanel: document.getElementById("exportPanel"),
+      summaryGrid: document.getElementById("summaryGrid"),
+      numericTableBody: document.getElementById("numericTableBody"),
+      categoricalStats: document.getElementById("categoricalStats"),
+      trendPanel: document.getElementById("trendPanel"),
+      trendContent: document.getElementById("trendContent"),
+      exportButtons: Array.from(document.querySelectorAll(".export-button")),
+    };
+
+    function initialize() {
+      bindDropzone();
+      elements.fileInput.addEventListener("change", (event) => {
+        const [file] = event.target.files;
+        setSelectedFile(file || null);
+      });
+
+      elements.analyzeButton.addEventListener("click", analyzeFile);
+      elements.exportButtons.forEach((button) => {
+        button.addEventListener("click", () => generateReport(button.dataset.format));
+      });
+    }
+
+    function bindDropzone() {
+      ["dragenter", "dragover"].forEach((eventName) => {
+        elements.dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          elements.dropzone.classList.add("active");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        elements.dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          if (eventName === "drop") {
+            const [file] = event.dataTransfer.files;
+            setSelectedFile(file || null);
+          }
+          elements.dropzone.classList.remove("active");
+        });
+      });
+    }
+
+    function setSelectedFile(file) {
+      state.selectedFile = file;
+      state.sessionId = null;
+      state.latestResult = null;
+      hidePanel(elements.statsPanel);
+      hidePanel(elements.exportPanel);
+      clearMessage(elements.exportMessage);
+
+      if (!file) {
+        elements.fileName.textContent = "No file selected yet.";
+        return;
+      }
+
+      if (!isSupportedFile(file.name)) {
+        elements.fileInput.value = "";
+        state.selectedFile = null;
+        elements.fileName.textContent = "No file selected yet.";
+        showMessage(elements.statusMessage, "Only .csv and .xlsx files are supported.", "error");
+        return;
+      }
+
+      clearMessage(elements.statusMessage);
+      elements.fileName.textContent = `${file.name} · ${formatFileSize(file.size)}`;
+    }
+
+    async function analyzeFile() {
+      if (!state.selectedFile) {
+        showMessage(elements.statusMessage, "Choose a CSV or XLSX file before running analysis.", "error");
+        return;
+      }
+
+      setLoading(elements.analyzeButton, true);
+      clearMessage(elements.exportMessage);
+      showMessage(elements.statusMessage, "Processing your file through the AutoFlow pipeline.", "success");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", state.selectedFile);
+
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || "Upload failed.");
+        }
+
+        state.sessionId = payload.session_id;
+        state.latestResult = payload;
+        renderStats(payload);
+        showPanel(elements.statsPanel);
+        showPanel(elements.exportPanel);
+        showMessage(elements.statusMessage, "Analysis complete. Your report session is ready.", "success");
+      } catch (error) {
+        hidePanel(elements.statsPanel);
+        hidePanel(elements.exportPanel);
+        showMessage(elements.statusMessage, error.message || "Something went wrong during analysis.", "error");
+      } finally {
+        setLoading(elements.analyzeButton, false);
+      }
+    }
+
+    function renderStats(payload) {
+      const numericColumns = Object.keys(payload.numeric_stats || {});
+      const categoricalColumns = Object.keys(payload.categorical_stats || {});
+
+      elements.summaryGrid.innerHTML = "";
+      const summaries = [
+        { label: "Total Rows", value: payload.row_count },
+        { label: "Total Columns", value: payload.column_count },
+        { label: "Numeric Columns", value: numericColumns.length },
+        { label: "Categorical Columns", value: categoricalColumns.length },
+      ];
+
+      summaries.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "summary-card";
+        card.innerHTML = `<span class="eyebrow">${item.label}</span><strong>${item.value}</strong>`;
+        elements.summaryGrid.appendChild(card);
+      });
+
+      renderNumericTable(payload.numeric_stats || {});
+      renderCategoricalStats(payload.categorical_stats || {});
+      renderTrend(payload.time_trend);
+    }
+
+    function renderNumericTable(numericStats) {
+      const entries = Object.entries(numericStats);
+      elements.numericTableBody.innerHTML = "";
+
+      if (!entries.length) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td colspan="6" class="empty-state">No numeric statistics were detected in this file.</td>`;
+        elements.numericTableBody.appendChild(row);
+        return;
+      }
+
+      entries.forEach(([column, stats]) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="mono">${escapeHtml(column)}</td>
+          <td class="mono">${formatValue(stats.min)}</td>
+          <td class="mono">${formatValue(stats.max)}</td>
+          <td class="mono">${formatValue(stats.mean)}</td>
+          <td class="mono">${formatValue(stats.median)}</td>
+          <td class="mono">${formatValue(stats.total)}</td>
+        `;
+        elements.numericTableBody.appendChild(row);
+      });
+    }
+
+    function renderCategoricalStats(categoricalStats) {
+      const entries = Object.entries(categoricalStats);
+      elements.categoricalStats.innerHTML = "";
+
+      if (!entries.length) {
+        elements.categoricalStats.innerHTML = `<div class="empty-state">No categorical columns were available for summary.</div>`;
+        return;
+      }
+
+      entries.forEach(([column, details]) => {
+        const block = document.createElement("div");
+        block.className = "category-block";
+
+        const label = document.createElement("div");
+        label.className = "category-label";
+        label.textContent = `${column} · ${details.unique_values} unique`;
+
+        const chipRow = document.createElement("div");
+        chipRow.className = "chip-row";
+
+        (details.top_values || []).forEach((item) => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.innerHTML = `${escapeHtml(item.value)} <span>${item.count}</span>`;
+          chipRow.appendChild(chip);
+        });
+
+        if (!chipRow.children.length) {
+          chipRow.innerHTML = `<div class="empty-state">No frequent values available.</div>`;
+        }
+
+        block.appendChild(label);
+        block.appendChild(chipRow);
+        elements.categoricalStats.appendChild(block);
+      });
+    }
+
+    function renderTrend(timeTrend) {
+      elements.trendContent.innerHTML = "";
+
+      if (!timeTrend || !Array.isArray(timeTrend.points) || !timeTrend.points.length) {
+        elements.trendContent.innerHTML = `<div class="empty-state">No date-based trend was detected in the uploaded file.</div>`;
+        return;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "trend";
+
+      const meta = document.createElement("div");
+      meta.className = "trend-meta";
+      meta.textContent = timeTrend.summary || "Trend summary available.";
+      wrapper.appendChild(meta);
+
+      const maxValue = Math.max(...timeTrend.points.map((point) => Number(point.value) || 0), 1);
+
+      timeTrend.points.forEach((point) => {
+        const row = document.createElement("div");
+        row.className = "trend-row";
+        const percentage = Math.max(6, ((Number(point.value) || 0) / maxValue) * 100);
+
+        row.innerHTML = `
+          <div class="trend-label">${escapeHtml(point.period)}</div>
+          <div class="trend-track"><div class="trend-fill" style="width: ${percentage}%"></div></div>
+          <div class="trend-value">${formatValue(point.value)}</div>
+        `;
+        wrapper.appendChild(row);
+      });
+
+      elements.trendContent.appendChild(wrapper);
+    }
+
+    async function generateReport(outputFormat) {
+      if (!state.sessionId) {
+        showMessage(elements.exportMessage, "Analyze a file first so AutoFlow can create a report session.", "error");
+        return;
+      }
+
+      const activeButton = elements.exportButtons.find((button) => button.dataset.format === outputFormat);
+      setLoading(activeButton, true, true);
+      showMessage(elements.exportMessage, `Generating ${outputFormat.toUpperCase()} report output.`, "success");
+
+      try {
+        const url = new URL("/report", window.location.origin);
+        url.searchParams.set("session_id", state.sessionId);
+        url.searchParams.set("output_format", outputFormat);
+
+        const response = await fetch(url.toString());
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || "Report generation failed.");
+        }
+
+        const urls = payload.download_urls || [];
+        if (!urls.length) {
+          throw new Error("No download URLs were returned.");
+        }
+
+        for (const [index, downloadUrl] of urls.entries()) {
+          triggerDownload(downloadUrl, index * 180);
+        }
+
+        showMessage(elements.exportMessage, "Your report files are ready and downloading now.", "success");
+      } catch (error) {
+        showMessage(elements.exportMessage, error.message || "Unable to generate report output.", "error");
+      } finally {
+        setLoading(activeButton, false, true);
+      }
+    }
+
+    function triggerDownload(url, delay) {
+      window.setTimeout(() => {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      }, delay);
+    }
+
+    function showPanel(panel) {
+      panel.classList.remove("hidden");
+    }
+
+    function hidePanel(panel) {
+      panel.classList.add("hidden");
+    }
+
+    function showMessage(target, message, type) {
+      target.textContent = message;
+      target.className = `message visible ${type}`;
+    }
+
+    function clearMessage(target) {
+      target.textContent = "";
+      target.className = "message";
+    }
+
+    function setLoading(button, isLoading, subtle = false) {
+      if (!button) {
+        return;
+      }
+
+      button.disabled = isLoading;
+      button.classList.toggle("is-loading", isLoading);
+
+      const spinner = button.querySelector(".spinner");
+      if (spinner) {
+        spinner.classList.toggle("light", subtle);
+      }
+    }
+
+    function isSupportedFile(filename) {
+      return /\.(csv|xlsx)$/i.test(filename || "");
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes) {
+        return "0 B";
+      }
+
+      const units = ["B", "KB", "MB", "GB"];
+      let value = bytes;
+      let unitIndex = 0;
+      while (value >= 1024 && unitIndex < units.length - 1) {
+        value /= 1024;
+        unitIndex += 1;
+      }
+      return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    function formatValue(value) {
+      if (value === null || value === undefined || value === "") {
+        return "—";
+      }
+
+      if (typeof value === "number") {
+        return Number.isInteger(value) ? value.toString() : value.toFixed(2);
+      }
+
+      const numericValue = Number(value);
+      if (!Number.isNaN(numericValue) && value !== true && value !== false) {
+        return Number.isInteger(numericValue) ? numericValue.toString() : numericValue.toFixed(2);
+      }
+
+      return escapeHtml(String(value));
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
